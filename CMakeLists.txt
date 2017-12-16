@@ -34,21 +34,37 @@ find_package(ZLIB)
 if (ZLIB_FOUND)
     message(STATUS "Found ZLIB: ${ZLIB_LIBRARIES} ${ZLIB_INCLUDE_DIRS}")
 else()
-    message(STATUS "Could not find local ZLIB, building external copy")
+    message(STATUS "Could not find local ZLIB; building local copy")
     include(ExternalProject)
     ExternalProject_Add(zlib
         GIT_REPOSITORY "https://github.com/madler/zlib.git"
+        GIT_TAG "v1.2.11"
         SOURCE_DIR "${CMAKE_BINARY_DIR}/zlib-src"
         BINARY_DIR "${CMAKE_BINARY_DIR}/zlib-build"
         INSTALL_COMMAND ""
+        CMAKE_ARGS "-DBUILD_SHARED_LIBS=ON"
         CMAKE_CACHE_ARGS "-DCMAKE_C_FLAGS:STRING=${CMAKE_C_FLAGS}"
         )
-    set(ZLIB_LIBRARIES ${CMAKE_BINARY_DIR}/zlib-build/${CMAKE_SHARED_LIBRARY_PREFIX}z${CMAKE_SHARED_LIBRARY_SUFFIX}
-                       ${CMAKE_BINARY_DIR}/zlib-build/${CMAKE_STATIC_LIBRARY_PREFIX}z${CMAKE_STATIC_LIBRARY_SUFFIX})
-    set(ZLIB_SRC_DIR ${CMAKE_BINARY_DIR}/zlib-src)
-    set(ZLIB_INCLUDE_DIRS ${ZLIB_SRC_DIR} ${CMAKE_BINARY_DIR}/zlib-build)
+    if (WIN32)
+        set(ZLIB_SHARED_LIBRARY_NAME zlib1)
+        set(ZLIB_STATIC_LIBRARY_NAME zlibstatic)
+    else()
+        set(ZLIB_SHARED_LIBRARY_NAME z)
+        set(ZLIB_STATIC_LIBRARY_NAME z)
+    endif()
+    set(ZLIB_SHARED_LIBRARY ${CMAKE_BINARY_DIR}/zlib-build/${CMAKE_SHARED_LIBRARY_PREFIX}${ZLIB_SHARED_LIBRARY_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
+    set(ZLIB_STATIC_LIBRARY ${CMAKE_BINARY_DIR}/zlib-build/${CMAKE_STATIC_LIBRARY_PREFIX}${ZLIB_STATIC_LIBRARY_NAME}${CMAKE_STATIC_LIBRARY_SUFFIX})
+    set(ZLIB_LIBRARIES ${ZLIB_SHARED_LIBRARY} ${ZLIB_STATIC_LIBRARY})
+    set(ZLIB_INCLUDE_DIRS ${CMAKE_BINARY_DIR}/zlib-src ${CMAKE_BINARY_DIR}/zlib-build)
+
+    # Shared zlib Library
     add_dependencies(qtiocompressor zlib)
-    message(STATUS "Will build ZLIB: ${ZLIB_LIBRARIES}")
+
+    # Static zlib Library
+    add_library(zlibstatic STATIC IMPORTED)
+    set_target_properties(zlibstatic PROPERTIES IMPORTED_LOCATION ${ZLIB_STATIC_LIBRARY})
+    add_dependencies(zlibstatic zlib)
+    add_dependencies(qtiocompressorstatic zlibstatic)
 endif()
 
 include_directories(${ZLIB_INCLUDE_DIRS})
