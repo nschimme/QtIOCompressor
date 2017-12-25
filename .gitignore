@@ -1,0 +1,10 @@
+.licenseAccepted
+build/
+**CMakeFiles/
+**.bak
+*.user
+*~
+*.autosave
+*Thumbs.db
+.qmake.stash
+**/.DS_Store
