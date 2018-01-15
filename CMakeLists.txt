@@ -29,9 +29,9 @@ IF(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
 ENDIF()
 
 SET(qtiocompressor_SRCS src/qtiocompressor.cpp)
-SET(qtiocompressor_HDRS src/qtiocompressor.h)
 
 ADD_LIBRARY(qtiocompressor SHARED ${qtiocompressor_SRCS})
+ADD_LIBRARY(qtiocompressorobj OBJECT ${qtiocompressor_SRCS})
 ADD_LIBRARY(qtiocompressorstatic STATIC ${qtiocompressor_SRCS})
 
 FIND_PACKAGE(ZLIB)
@@ -63,6 +63,7 @@ else()
 
     # Shared zlib Library
     ADD_DEPENDENCIES(qtiocompressor zlib)
+    ADD_DEPENDENCIES(qtiocompressorobj zlib)
 
     # Static zlib Library
     ADD_LIBRARY(zlibstatic STATIC IMPORTED)
